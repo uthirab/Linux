@@ -1,0 +1,168 @@
+@ author: Mandip Silwal		@ ID: 1001214877
+
+	.global main
+        .func main
+
+main:
+	BL  _scanf		@ branch to scanf procedure with return
+	MOV R10, R0		@ move return value to R10
+	BL  _getchar		@ get character from user
+	MOV R8, R0		@ move return value to R8
+	BL  _scanf		@ branch to scanf procedure with return
+	MOV R9, R0		@ move return value to R9	
+	MOV R1, R10		@ move R10 content to R1
+	MOV R2, R8		@ move R8 content to R2 
+	MOV R3, R9		@ move R9 content to R3 
+	BL  _compare		@ branch to compare procedure
+	MOV R5, R0		@ move R0 content to R5
+	BL  _printf		@ branch to printf procedure
+	B   main
+
+_scanf:
+	MOV R4, LR              @ store LR since scanf call overwrites
+    	SUB SP, SP, #4          @ make room on stack
+    	LDR R0, =format_num     @ R0 contains address of format num
+    	MOV R1, SP              @ move SP to R1 to store entry on stack
+    	BL  scanf                @ call scanf
+    	LDR R0, [SP]            @ load value at SP into R0
+    	ADD SP, SP, #4          @ restore the stack pointer
+    	MOV PC, R4              @ return
+
+_getchar:
+    	MOV R7, #3              @ write syscall, 3
+    	MOV R0, #0              @ input stream from monitor, 0
+    	MOV R2, #1              @ read a single character
+    	LDR R1, =read_char      @ store the character in data memory
+    	SWI 0                   @ execute the system call
+    	LDR R0, [R1]            @ move the character to the return register
+    	AND R0, #0xFF           @ mask out all but the lowest 8 bits
+    	MOV PC, LR              @ return
+
+_compare:
+	MOV  R4, LR		@ store LR since printf call overwrites
+	CMP  R2, #'+'		@ compare against "+" char
+	BLEQ _sum		@ branch and link if equal to "+"
+	CMP  R2, #'-'		@ compare against "-" char
+        BLEQ _dif		@ branch and link if equal to "-"
+	CMP  R2, #'*'		@ compare against "*" char
+        BLEQ _mult		@ branch and link if equal to "*"
+	CMP  R2, #'M'		@ compare against "M" char
+        BLEQ _max		@ branch and link if equal to "M"
+	MOV  PC, R4		@ return
+
+_sum:
+	ADD R0, R1, R3 		@ add R1 and R3 and store in R0
+	MOV PC, LR		@ return 
+
+_dif:
+        SUB R0, R1, R3		@ sub R1 and R3 and store in R0
+        MOV PC, LR		@ return
+
+_mult:
+        MUL R0, R1, R3		@ multiply R1 and R3 and store in R0
+        MOV PC, LR		@ return
+
+_max:
+        CMP   R1, R3		@ compare R1 and R3
+        MOVGT R0, R1		@ move R1 to R0 if greater than
+	MOVLT R0, R3		@ move R3 to R0 if less than
+        MOV PC, LR		@ return
+
+_printf:
+	MOV R4, LR              @ store LR since printf call overwrites
+    	LDR R0, =printf_str     @ R0 contains formatted string address
+	MOV R1, R5              @ R1 contains printf argument (redundant li$
+    	BL  printf              @ call printf
+    	MOV PC, R4              @ return
+
+.data
+format_num:	.asciz		"%d"
+read_char:      .ascii          " "
+printf_str:     .asciz          "%d\n"
+
+
+
+/************************************
+                                    Author: Mandip Silwal
+                                    Program: Assembly program to count number of partitions
+                                                                                        **********************************/
+
+    .global main
+    .func main
+
+main:
+    BL  _scanf              @ branch to scan procedure with return
+    MOV R4, R0              @ store n in R4
+    MOV R1, R0              @ pass n to partition partition    
+    BL  _scanf              @ branch to scan procedure with return
+    MOV R5, R0              @ store m in R5
+    MOV R2, R0              @ pass m to partition procedure    
+    BL  _partition          @ branch to partition procedure with return
+    MOV R2, R4              @ pass n to printf procedure
+    MOV R3, R5              @ pass n to printf procedure
+    MOV R1, R0              @ pass result to printf procedure
+    BL  _printf             @ branch to print procedure with return
+    B   main                @ branch to exit procedure with no return
+
+
+_printf:
+    PUSH {LR}               @ store the return address
+    LDR R0, =printf_str     @ R0 contains formatted string address
+    @MOV R1, R1             @ R1 contains printf argument 1 (redundant line)
+    @MOV R2, R2             @ R2 contains printf argument 2 (redundant line)
+    BL printf               @ call printf
+    POP {PC}                @ restore the stack pointer and return
+
+_scanf:
+    PUSH {LR}               @ store the return address
+    PUSH {R1}               @ backup regsiter value
+    LDR R0, =format_str     @ R0 contains address of format string
+    SUB SP, SP, #4          @ make room on stack
+    MOV R1, SP              @ move SP to R1 to store entry on stack
+    BL scanf                @ call scanf
+    LDR R0, [SP]            @ load value at SP into R0
+    ADD SP, SP, #4          @ remove value from stack
+    POP {R1}                @ restore register value
+    POP {PC}                @ restore the stack pointer and return
+
+_partition:
+    PUSH {LR}               @ store the return address
+
+    CMP R1, #0              @ compare the input argument to 1
+    MOVEQ R0, #1            @ set return value to 1 if equal
+    POPEQ {PC}              @ restore stack pointer and return if equal
+
+    CMP R1, #0              @ compare the input argument to 0
+    MOVLT R0, #0            @ set return value to 0 if equal
+    POPLT {PC}              @ restore stack pointer and return if equal
+
+    CMP R2, #0              @ compare the input argument to 0
+    MOVEQ R0, #0            @ set return value to 0 if equal
+    POPEQ {PC}              @ restore stack pointer and return if equal
+
+
+    PUSH {R1}               @ backup n
+    PUSH {R2} 		    @ backup m
+    MOV  R0, R2 	    @ m into R0
+    MOV  R2, R1		    @ n into R2
+    SUB R1, R2, R0          @ decrement the input argument
+    MOV R2, R0              @ R0 into R2
+    BL _partition           @ make recursive call
+
+    
+    POP {R2}                @ restore input argument n
+    POP {R1}                @ restore input argument m
+    PUSH {R0}               @ push R0 to stack
+    SUB R2, R2, #1          @ subtract 1 from second argument
+    BL _partition           @ make recursive call
+
+    MOV R10, R0             @ move R0 to R10
+    POP {R0}                @ get R0 value
+    ADD R0, R0, R10         @ sum the two branches 
+    POP  {PC}               @ restore the stack pointer and return
+
+.data
+number:         .word       0
+format_str:     .asciz      "%d"
+printf_str:     .asciz      "There are %d partitions of %d using integers upto %d\n"
+
