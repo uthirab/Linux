@@ -1,0 +1,81 @@
+.global main
+.func main
+   
+main:
+    BL _seedrand
+    MOV R9, #0              
+    MOV R10, #0
+    MOV R11, #0x3E8
+    
+readloop:
+    CMP R9, #10            
+    BEQ readdone
+    BL _getrand
+    BL _compare
+    MOV R2, R0             
+    MOV R1, R9             
+    BL  _printf            
+    ADD R9, R9, #1          
+    B   readloop            
+    
+readdone:
+    BL _printsl
+    BL _printlr
+    B _exit              
+
+_seedrand:
+	PUSH {LR}
+	MOV r0, #0
+	BL time
+	MOV r1, r0
+	BL srand
+	POP {PC}
+
+_getrand:
+	PUSH {LR}
+	BL rand
+	LSR R0, R0, #0Xe
+	LSR R0, R0, #7
+	LSR R0, R0, #0X1
+	MOV R2, R0
+	POP {PC}
+
+_compare:
+	PUSH {LR}
+	CMP R2, R10
+	MOVGT R10, R2
+	CMP R2, R11
+	MOVLO R11, R2
+	POP {PC}
+
+_printsl:
+     PUSH {LR}
+     LDR R0, =print_sm
+     MOV R1, R11
+     BL printf  
+     POP {PC}
+
+_printlr:
+	PUSH {LR}
+	LDR R0, =print_lg
+        MOV R1, R10
+        BL printf
+	POP {PC}   
+
+_exit:  
+    MOV R7, #1              
+    SWI 0                   
+       
+_printf:
+    PUSH {LR}               @ store the return address
+    LDR R0, =printf_str     @ R0 contains formatted string address
+    BL printf               @ call printf
+    POP {PC}                @ restore the stack pointer and return
+   
+.data
+
+.balign 4
+a:              .skip       40
+printf_str:     .asciz      "a[%d] = %d\n"
+print_lg:	.ascii	    "MAXIMUM VALUE= %d\n"
+print_sm:	.ascii	    "MINIMUM VALUE= %d\n"
