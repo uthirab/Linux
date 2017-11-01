@@ -3,6 +3,8 @@
    
 main:
     BL _seedrand
+    MOV R8, #0
+    MOV R5, #40
     MOV R9, #0              
     MOV R10, #0
     MOV R11, #0x3E8
@@ -13,11 +15,11 @@ readloop:
     BL _getrand
     BL _compare
     MOV R2, R0             
-    MOV R1, R9             
-    BL  _printf            
+    MOV R1, R9            
+    BL  _printf             
     ADD R9, R9, #1          
-    B   readloop            
-    
+    B   readloop         
+
 readdone:
     BL _printsl
     BL _printlr
@@ -35,9 +37,24 @@ _getrand:
 	PUSH {LR}
 	BL rand
 	LSR R0, R0, #0Xe
-	LSR R0, R0, #7
-	LSR R0, R0, #0X1
-	MOV R2, R0
+	TST R0, R0, LSR #9
+	LSR R0, R0, #0X7
+        SUB R0, R0, #44
+        CMP R0, R8
+        BL _value
+        MOV R2, R0
+	POP {PC}
+
+_value:
+	PUSH {LR}
+	AND R0, R0, #1000
+	CMP R0, #1000
+	BEQ _sub
+        POP {PC}
+
+_sub:
+	PUSH {LR}
+	SUB R0, R0, #1
 	POP {PC}
 
 _compare:
@@ -67,15 +84,15 @@ _exit:
     SWI 0                   
        
 _printf:
-    PUSH {LR}               @ store the return address
-    LDR R0, =printf_str     @ R0 contains formatted string address
-    BL printf               @ call printf
-    POP {PC}                @ restore the stack pointer and return
+    PUSH {LR}               
+    LDR R0, =printf_str     
+    BL printf               
+    POP {PC}                
    
 .data
 
 .balign 4
 a:              .skip       40
 printf_str:     .asciz      "a[%d] = %d\n"
-print_lg:	.ascii	    "MAXIMUM VALUE= %d\n"
-print_sm:	.ascii	    "MINIMUM VALUE= %d\n"
+print_lg:	.asciz	    "MAXIMUM VALUE= %d\n"
+print_sm:	.asciz	    "MINIMUM VALUE= %d\n"
