@@ -1,0 +1,74 @@
+.global main
+.func main
+
+main:
+	BL _input
+	MOV R4, R0	@ N FOR PRINT
+	MOV R1, R0	@ N FOR LOOP
+	BL _input
+	MOV R5, R0	@ M FOR PRINT
+	MOV R2, R0	@ M FOR LOOP
+	BL _compare
+	MOV R2, R4	@ #OF PARTITION
+	MOV R3,	R5	@ N VALUE
+	MOV R1, R0	@ M VALUE
+	@MOV R1, R0
+	BL _output
+	B main
+	
+_input:
+        PUSH {LR}
+	PUSH {R1}
+	SUB SP, SP, #4	
+	LDR R0, =nmvalue
+	MOV R1, SP
+	BL scanf
+	LDR R0, [SP]
+	ADD SP, SP, #4
+	POP {R1}
+	POP {PC}
+
+_compare:
+	PUSH {LR}
+	
+	CMP R1, #0	@ N==0
+	MOVEQ R0, #1	
+	POPEQ {PC}
+	
+	CMP R1, #0	@ N<0
+	MOVLT R0, #0
+	POPLT {PC}
+	
+	CMP R2, #0	@ M == 0
+	MOVEQ R0, #0
+	POPEQ {PC}
+
+	PUSH {R1}	 @BACKUP N
+	PUSH {R2}	 @BACK UP M
+	MOV R6, R2	 @ R6= M 
+	MOV R2, R1	 @ R2 =N
+	SUB R1, R2, R6   @ R1= N-M
+	MOV R2, R6	 @ R2=M
+	BL _compare
+	
+	POP {R2}	@AS U R NOT MESSING WITH M HERE
+	POP {R1}	@ AS U NEED N VALUE
+	PUSH {R0}	@ KEEP THE COUNT
+	SUB R2, R2, #1	@ R9= M-1
+	BL _compare
+
+	MOV R6, R0	@ANOTHER R0 VALUE
+	POP {R0}	@ NEED THE FIRST R0 VALUE
+	ADD R0, R0, R6	@ADD FIRST PART AND SECOND PART
+	POP {PC}
+
+_output:
+    PUSH {LR}
+    LDR R0, =printst
+    BL printf
+    POP {PC}
+	
+
+.data
+nmvalue: .asciz  	"%d"
+printst: .asciz 	"There are %d partitions of %d using integers up to %d\n"
