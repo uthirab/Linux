@@ -1,0 +1,146 @@
+.global main
+.func main
+
+main:
+	MOV R10, #0	@R10 THE ARRAY NUMBER
+	BL _compare	@CALL THE ARRAY COMPARE FUNCTION
+	MOV R10, #0	@R10 REASSIGN TO ONE
+	BL _printarray	@CALL PRINT THE ARRAY
+	BL _searchinput	@get the intem to be searched
+	MOV R8, R0
+	MOV R10, #0
+	MOV R11, #1
+	BL _result	@print the array that has values
+	BL _epart	@finally to taste the success
+	B  _exit	@EXIT CALL
+ 
+
+_compare:
+	PUSH {LR}		@push the link register
+	CMP R10, #10		@COMPARE R10 WITH 9
+	POPEQ {PC}		@pop if the value is equal		
+	MOV R1, R10		@ to print the numbers mov value of r10 to r1
+	BL _input		@ prompt and scan done here
+  MOV R3, R0		@ move the r0 to r3
+LDR R1, =a              @ get address of a
+	LSL R2, R10, #2         @ multiply index*4 to get array offset
+	ADD R2, R1, R2          @ R2 now has the element address
+	STR R0, [R2]            @ write the address of a[i] to a[i]
+	ADD R10, R10, #1	@ increment the value of r10 by 1
+	BL _compare		@ continue the loop
+	POP {PC}		@ pop pc
+ 
+_input:	
+	PUSH {LR}		@ push the link register
+	SUB SP, SP, #4		@ make space in stack
+	LDR R0, =prompt_str	@ R0 load the data
+	BL printf		@ print the data
+	MOV R1, SP		@ R1 stores the sp value
++	LDR R0, =getinput	@ R0 loads the data 
+	BL scanf		@ scans the data
++	LDR R0, [SP]		@ R0 is loaded with the content of SP
++	ADD SP, SP, #4		@ re add the SP
++	POP {PC}		@ pop pc
++
++_printarray:
++   	PUSH {LR}		@ PUSH THE LINK REGISTER
++	CMP R10, #10             @ check to see if we are done iterating
++	POPEQ {PC}		@ POP IF EQUAL 
++	LDR R1, =a              @ get address of a
++	LSL R2, R10, #2          @ multiply index*4 to get array offset
++	ADD R2, R1, R2          @ R2 now has the element address
++	LDR R1, [R2]            @ read the array at address 
++    	PUSH {R10}		@ back up r10
++	PUSH {R1}		@back up r1
++	PUSH {R2}		@back up r2
++	MOV R2, R1              @ move array value to R2 for printf
++    	MOV R1, R10              @ move array index to R1 for printf
++   	BL  _printf             @ branch to print procedure with return
++    	POP {R2}		@take r2 back
++	POP {R1}		@take r1 back
++	POP {R10}		@take r10 back
++	ADD R10, R10, #1          @ increment index
++	BL _printarray            @ branch to next loop iteration
++	POP {PC}
++   
++_printf:
++	PUSH {LR}               @ store the return address
++	LDR R0, =array_str	    @ R0 contains formatted string address
++	BL printf               @ call printf
++	POP {PC}                @ restore the stack pointer and return
++
++   
++_exit:  
++	MOV R7, #1              @ terminate syscall, 1
++	SWI 0                   @ execute syscall
++
++_searchinput:
++	PUSH {LR}		@ push the link register
++	SUB SP, SP, #4		@ make space in stack
++	LDR R0, =prompt_sea	@ R0 load the data
++	BL printf		@ print the data
++	MOV R1, SP		@ R1 stores the sp value
++	LDR R0, =seainput	@ R0 loads the data 
++	BL scanf		@ scans the data
++	LDR R0, [SP]		@ R0 is loaded with the content of SP
++	ADD SP, SP, #4		@ re add the SP
++	POP {PC}		@ pop pc
++
++_result:
++   	PUSH {LR}		@ PUSH THE LINK REGISTER
++	CMP R10, #10             @ check to see if we are done iterating
++	POPEQ {PC}		@ POP IF EQUAL 
++	LDR R1, =a              @ get address of a
++	LSL R2, R10, #2          @ multiply index*4 to get array offset
++	ADD R2, R1, R2          @ R2 now has the element address
++	LDR R1, [R2]            @ read the array at address 
++    	ADD R10, R10, #1          @ increment index
++	CMP R1, R8		@compare with the search value
++	BNE notavail
++	CMP R1, R8
++	BEQ avail
++	BL _result            @ branch to next loop iteration
++	POP {PC}
++   
++notavail:
++	PUSH {LR}               @ store the return address
++	ADD R11, R11, #1
++	BL _result
++	POP {PC}                @ restore the stack pointer and return
++ 	
++avail:
++	PUSH {LR}
++	SUB R10, R10, #1	@subtract r10 with 1
++	MOV R2, R1              @ move array value to R2 for printf
++    	MOV R1, R10             @ move array index to R1 for printf
++   	BL  _printa             @ branch to print proceed
++	ADD R10, R10, #1	@ add back the 1 to r10
++	BL _result
++	POP {PC}
++
++_printa:
++	PUSH {LR}
++	LDR R0, =array_str
++	BL printf
++	POP {PC}
++
++_epart:
++	PUSH {LR}
++	CMP R11, #11
++	POPNE {PC}
++	LDR R0, =notavaila
++	BL printf
++	POP {PC}
++
++
++.data
++
++.balign 4
++a:              .skip           40
++prompt_str:	.asciz		"Value_%d="
++prompt_sea:	.asciz		"ENTER A SEARCH VALUE:"
++getinput:	.asciz		"%d" 
++seainput:	.asciz		"%d" 
++array_str:	.asciz		"array_a[%d] = %d\n"
++printa:		.asciz		"array_a[%d] = %d\n"
++notavaila:	.ascii		"That value does not exist in the array!\n"
